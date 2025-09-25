@@ -1,0 +1,41 @@
+let 
+  func product (a: Integer, b: Integer): Integer ~
+    a * b;
+
+  func sum (a: Integer, b: Integer): Integer ~ 
+    a + b;
+
+  var i: Integer;
+  var j: Integer
+  
+in
+ begin
+ getint(var i);
+ getint(var  j);
+ 
+ puteol();  
+ putint(i);
+ puteol();
+ putint(j);
+ puteol();
+ 
+
+ if i = j then
+   begin
+    putint(sum(i, j));
+     puteol(); 
+     putint(product(i, j));
+     puteol();
+     put('s'); put('a'); put('m');put('e')
+   end
+ else
+   begin
+     putint(sum(i, j));
+     put(' '); 
+     putint(product(i, j))
+   end;
+ end
+
+
+
+

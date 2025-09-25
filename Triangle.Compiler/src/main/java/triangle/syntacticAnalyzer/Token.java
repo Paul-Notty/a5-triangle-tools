@@ -50,12 +50,13 @@ final class Token {
 	// Token classes...
 
 	public enum Kind {
+		
 		// literals, identifiers, operators...
 		INTLITERAL("<int>"), CHARLITERAL("<char>"), IDENTIFIER("<identifier>"), OPERATOR("<operator>"),
 
 		// reserved words - keep in alphabetical order for ease of maintenance...
 		ARRAY("array"), BEGIN("begin"), CONST("const"), DO("do"), ELSE("else"), END("end"), FUNC("func"), IF("if"), IN("in"), LET("let"), OF("of"),
-		PROC("proc"), RECORD("record"), THEN("then"), TYPE("type"), VAR("var"), WHILE("while"),
+		PROC("proc"), RECORD("record"), REPEAT("repeat"), THEN("then"), TYPE("type"), UNTIL("until"), VAR("var"), WHILE("while"),
 
 		// punctuation...
 		DOT("."), COLON(":"), SEMICOLON(";"), COMMA(","), BECOMES(":="), IS("~"),
@@ -66,11 +67,12 @@ final class Token {
 		// special tokens...
 		EOT(""), ERROR("<error>");
 		
+		
 	    public final String spelling;
 		
 	    private Kind(String spelling) {
 	        this.spelling = spelling;
-	    }
+	    } 
 	    
 	    /**
 	     * iterate over the reserved words above to find the one with a given spelling
