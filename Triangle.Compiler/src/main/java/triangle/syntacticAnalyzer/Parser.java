@@ -289,6 +289,31 @@ public class Parser {
 				accept(Token.Kind.RPAREN);
 				finish(commandPos);
 				commandAST = new CallCommand(iAST, apsAST, commandPos);
+				
+			} else if (currentToken.kind == Token.Kind.OPERATOR && currentToken.spelling.equals("++")) {
+		        // Handle increment operator: a++ becomes a = a + 1
+		        Vname vAST = parseRestOfVname(iAST);
+		        acceptIt(); // consume the ++ operator
+		        
+		        // Create the equivalent assignment: a = a + 1
+		        SourcePosition assignPos = new SourcePosition();
+		        start(assignPos);
+		        
+		        // Create VnameExpression for 'a'
+		        VnameExpression leftExpr = new VnameExpression(vAST, vAST.getPosition());
+		        
+		        // Create IntegerLiteral for '1'
+		        IntegerLiteral oneLiteral = new IntegerLiteral("1", currentToken.position);
+		        IntegerExpression oneExpr = new IntegerExpression(oneLiteral, currentToken.position);
+		        
+		        // Create Operator for '+'
+		        Operator plusOp = new Operator("+", currentToken.position);
+		        
+		        // Create BinaryExpression for 'a + 1'
+		        BinaryExpression rightExpr = new BinaryExpression(leftExpr, plusOp, oneExpr, assignPos);
+		        
+		        finish(assignPos);
+		        commandAST = new AssignCommand(vAST, rightExpr, assignPos);
 
 			} else {
 
@@ -559,11 +584,16 @@ public class Parser {
 		vnameAST = parseRestOfVname(iAST);
 		return vnameAST;
 	}
+	
+	
 
 	Vname parseRestOfVname(Identifier identifierAST) throws SyntaxError {
 		SourcePosition vnamePos = new SourcePosition();
 		vnamePos = identifierAST.getPosition();
 		Vname vAST = new SimpleVname(identifierAST, vnamePos);
+		
+		
+		
 
 		while (currentToken.kind == Token.Kind.DOT || currentToken.kind == Token.Kind.LBRACKET) {
 
@@ -578,6 +608,11 @@ public class Parser {
 				finish(vnamePos);
 				vAST = new SubscriptVname(vAST, eAST, vnamePos);
 			}
+			
+			
+			
+			
+		
 		}
 		return vAST;
 	}
