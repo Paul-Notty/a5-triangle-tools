@@ -102,7 +102,6 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 
 	@Override
 	public AbstractSyntaxTree visitFuncFormalParameter(FuncFormalParameter ast, Void arg) {
-		ast.I.visit(this);
 		ast.T.visit(this);
 		return null;
 	}
@@ -498,15 +497,15 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 	}
 
 	// TODO uncomment if you've implemented the repeat command
-//	@Override
-//	public AbstractSyntaxTree visitRepeatCommand(RepeatCommand ast, Void arg) {
-//		ast.C.visit(this);
-//		AbstractSyntaxTree replacement = ast.E.visit(this);
-//		if (replacement != null) {
-//			ast.E = (Expression) replacement;
-//		}
-//		return null;
-//	}
+	@Override
+	public AbstractSyntaxTree visitRepeatCommand(RepeatCommand ast, Void arg) {
+		ast.C.visit(this);
+		AbstractSyntaxTree replacement = ast.E.visit(this);
+		if (replacement != null) {
+			ast.E = (Expression) replacement;
+		}
+		return null;
+	}
 
 	@Override
 	public AbstractSyntaxTree visitMultipleArrayAggregate(MultipleArrayAggregate ast, Void arg) {
@@ -582,6 +581,18 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 			if (o.decl == StdEnvironment.addDecl) {
 				foldedValue = int1 + int2;
 			}
+			
+			if(o.decl == StdEnvironment.subtractDecl) {
+				foldedValue = int1 - int2;
+			}
+			
+			if(o.decl == StdEnvironment.multiplyDecl) {
+				foldedValue = int1 * int2;
+			}
+			
+			if (o.decl == StdEnvironment.divideDecl) {
+				foldedValue = int1 / int2;
+			}
 
 			if (foldedValue instanceof Integer) {
 				IntegerLiteral il = new IntegerLiteral(foldedValue.toString(), node1.getPosition());
@@ -597,10 +608,10 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 		return null;
 	}
 
-	@Override
-	public AbstractSyntaxTree visitRepeatCommand(RepeatCommand ast, Void arg) {
+//	@Override
+	//public AbstractSyntaxTree visitRepeatCommand(RepeatCommand ast, Void arg) {
 		// TODO Auto-generated method stub
-		return null;
-	}
+		//return null;
+	//}
 
 }

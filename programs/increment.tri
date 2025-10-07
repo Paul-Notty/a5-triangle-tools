@@ -11,4 +11,22 @@ begin
     a++;
     putint(a);
     puteol();
+    a++;
+    putint(a);
+    puteol();
+    a++;
+    putint(a);
+    puteol();
+    a++;
+    putint(a);
+    puteol();
+    a++;
+    putint(a);
+    puteol();
+    a++;
+    putint(a);
+    puteol();
+    a++;
+    putint(a);
+    puteol();
 end
