@@ -18,33 +18,53 @@
 
 package triangle;
 
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
+
 import triangle.abstractSyntaxTrees.Program;
 import triangle.codeGenerator.Emitter;
 import triangle.codeGenerator.Encoder;
 import triangle.contextualAnalyzer.Checker;
+import triangle.optimiser.CompilerStatistics;
 import triangle.optimiser.ConstantFolder;
 import triangle.syntacticAnalyzer.Parser;
 import triangle.syntacticAnalyzer.Scanner;
 import triangle.syntacticAnalyzer.SourceFile;
 import triangle.treeDrawer.Drawer;
-
 /**
  * The main driver class for the Triangle compiler.
  */
+
 public class Compiler {
 
 	/** The filename for the object program, normally obj.tam. */
+	@Argument(alias = "obje" , description = "Output file name (default: obj.tam)")
 	static String objectName = "obj.tam";
 	
+	@Argument(alias = "sourceName" , description = "Source file that is to be compiled" , required = true)
+	static String sourceName;
+	
+	@Argument(alias = "showTree" , description = "Show the AST")
 	static boolean showTree = false;
+	
+	@Argument(alias = "folding" , description = "Enabling the folding optimization")
 	static boolean folding = false;
+	
+	@Argument(alias = "showTreeAfter" , description = "Show the AST after the folding optimiazation")
+	static boolean showTreeAfter = false;
+	
+	@Argument(alias = "showStats" , description = "Shows the compilers stats")
+	static boolean showStats = false;
+	
+	@Argument(alias = "hoisting" , description = "Hoists expressions")
+	static boolean hoisting = false;
 
 	private static Scanner scanner;
 	private static Parser parser;
 	private static Checker checker;
 	private static Encoder encoder;
 	private static Emitter emitter;
-	private static ErrorReporter reporter;
+	private static ErrorReporter reporter;  
 	private static Drawer drawer;
 
 	/** The AST representing the source program. */
@@ -63,7 +83,7 @@ public class Compiler {
 	 * @return true iff the source program is free of compile-time errors, otherwise
 	 *         false.
 	 */
-	static boolean compileProgram(String sourceName, String objectName, boolean showingAST, boolean showingTable) {
+	static boolean compileProgram() {
 
 		System.out.println("********** " + "Triangle Compiler (Java Version 2.1)" + " **********");
 
@@ -91,16 +111,31 @@ public class Compiler {
 			// }
 			System.out.println("Contextual Analysis ...");
 			checker.check(theAST); // 2nd pass
-			if (showingAST) {
+			if (showTree) {
 				drawer.draw(theAST);
 			}
 			if (folding) {
 				theAST.visit(new ConstantFolder());
+
+			}
+			if (showTreeAfter) {
+				System.out.println("Here is the ast after optimization:");
+				drawer.draw(theAST);
+			}
+			
+			if(showStats) {
+				CompilerStatistics stats = new CompilerStatistics();
+				theAST.visit(stats);
+				stats.displayCompilerStatistics();
+			}
+			
+			if(hoisting) {
+				Hoisting hoisting = new Hoisting();
 			}
 			
 			if (reporter.getNumErrors() == 0) {
 				System.out.println("Code Generation ...");
-				encoder.encodeRun(theAST, showingTable); // 3rd pass
+				encoder.encodeRun(theAST, false); // 3rd pass
 			}
 		}
 
@@ -121,23 +156,24 @@ public class Compiler {
 	 *             source filename.
 	 */
 	public static void main(String[] args) {
-
+		
+		Compiler compiler = new Compiler();
+		Args.parseOrExit(compiler, args);
+		var compiledOK = compileProgram();
+		System.exit(compiledOK ? 0 : 1);
+	}
+	
+		/*
 		if (args.length < 1) {
 			System.out.println("Usage: tc filename [-o=outputfilename] [tree] [folding]");
 			System.exit(1);
 		}
-		
 		parseArgs(args);
-
-		String sourceName = args[0];
+		String sourceName = args[sourceName];
+		*/
 		
-		var compiledOK = compileProgram(sourceName, objectName, showTree, false);
-
-		if (!showTree) {
-			System.exit(compiledOK ? 0 : 1);
-		}
-	}
-	
+		
+	/*
 	private static void parseArgs(String[] args) {
 		for (String s : args) {
 			var sl = s.toLowerCase();
@@ -147,7 +183,10 @@ public class Compiler {
 				objectName = s.substring(3);
 			} else if (sl.equals("folding")) {
 				folding = true;
+			} else if(folding  == true ) {
+				showTreeAfter = true;
 			}
 		}
-	}
+	}*/
+
 }

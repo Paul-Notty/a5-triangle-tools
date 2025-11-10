@@ -81,7 +81,7 @@ import triangle.abstractSyntaxTrees.vnames.DotVname;
 import triangle.abstractSyntaxTrees.vnames.SimpleVname;
 import triangle.abstractSyntaxTrees.vnames.SubscriptVname;
 
-public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSyntaxTree>,
+public class CompilerStatistics implements ActualParameterVisitor<Void, AbstractSyntaxTree>,
 		ActualParameterSequenceVisitor<Void, AbstractSyntaxTree>, ArrayAggregateVisitor<Void, AbstractSyntaxTree>,
 		CommandVisitor<Void, AbstractSyntaxTree>, DeclarationVisitor<Void, AbstractSyntaxTree>,
 		ExpressionVisitor<Void, AbstractSyntaxTree>, FormalParameterSequenceVisitor<Void, AbstractSyntaxTree>,
@@ -92,6 +92,9 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 	{
 
 	}
+	
+	private int characterExpressionsCount = 0;
+	private int integerExpressionsCount = 0;
 
 	@Override
 	public AbstractSyntaxTree visitConstFormalParameter(ConstFormalParameter ast, Void arg) {
@@ -249,7 +252,8 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 	public AbstractSyntaxTree visitIdentifier(Identifier ast, Void arg) {
 		return null;
 	}
-
+	
+	
 	@Override
 	public AbstractSyntaxTree visitEmptyFormalParameterSequence(EmptyFormalParameterSequence ast, Void arg) {
 		return null;
@@ -299,6 +303,15 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 		// if we get here, we can't fold any higher than this level
 		return null;
 	}
+	
+	
+	public int getCharacterExpressionsCount() {
+		return characterExpressionsCount;
+	}
+
+	public int getIntegerExpressionsCount() {
+		return integerExpressionsCount;
+	}
 
 	@Override
 	public AbstractSyntaxTree visitCallExpression(CallExpression ast, Void arg) {
@@ -309,6 +322,7 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 
 	@Override
 	public AbstractSyntaxTree visitCharacterExpression(CharacterExpression ast, Void arg) {
+		characterExpressionsCount++;
 		ast.CL.visit(this);
 		return null;
 	}
@@ -338,7 +352,9 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 
 	@Override
 	public AbstractSyntaxTree visitIntegerExpression(IntegerExpression ast, Void arg) {
-		return ast;
+		integerExpressionsCount++;
+		ast.IL.visit(this);
+		return null;
 	}
 
 	@Override
@@ -454,6 +470,8 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 
 	@Override
 	public AbstractSyntaxTree visitCallCommand(CallCommand ast, Void arg) {
+		ast.APS.visit(this);
+		ast.I.visit(this); 
 		return null;
 	}
 
@@ -544,17 +562,6 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 		ast.AP.visit(this);
 		return null;
 	}
-	
-	@Override
-	public AbstractSyntaxTree visitLoopCommand(LoopCommand ast, Void arg) {
-		ast.C1.visit(this); 
-	    AbstractSyntaxTree replacement = ast.E.visit(this);
-	    if (replacement != null) {
-	        ast.E = (Expression) replacement;
-	    }
-	    ast.C2.visit(this); 
-	    return null;}
-	
 
 	@Override
 	public AbstractSyntaxTree visitConstActualParameter(ConstActualParameter ast, Void arg) {
@@ -593,61 +600,38 @@ public class ConstantFolder implements ActualParameterVisitor<Void, AbstractSynt
 			if (o.decl == StdEnvironment.addDecl) {
 				foldedValue = int1 + int2;
 			}
-			
-			else if (o.decl == StdEnvironment.equalDecl) {
-				foldedValue = int1 == int2;
-			}
-			
-			
-			else if (o.decl == StdEnvironment.lessDecl) {
-				foldedValue = int1 < int2;
-			
-			}
-			
-			else if(o.decl == StdEnvironment.notgreaterDecl) {
-				foldedValue = int1 <= int2;
-			}
-			
-			else if (o.decl == StdEnvironment.greaterDecl) {
-				foldedValue = int1 > int2;
-			}
-			
-			else if (o.decl == StdEnvironment.notlessDecl) {
-				foldedValue = int1 >= int2;
-			}
-			
-			else if (o.decl == StdEnvironment.unequalDecl){
-				foldedValue = int1 != int2;
-			}
-			
 
 			if (foldedValue instanceof Integer) {
 				IntegerLiteral il = new IntegerLiteral(foldedValue.toString(), node1.getPosition());
 				IntegerExpression ie = new IntegerExpression(il, node1.getPosition());
 				ie.type = StdEnvironment.integerType;
-				return ie;
-			
-			}else if (foldedValue instanceof Boolean) {
-				Boolean booleanValue = (Boolean) foldedValue;
-			
-				Identifier boolId = new Identifier(
-					booleanValue ? "true" : "false",
-					node1.getPosition()
-				);
-			
-				boolId.decl = booleanValue ? StdEnvironment.trueDecl : StdEnvironment.falseDecl;
-            
-				SimpleVname vname = new SimpleVname(boolId, node1.getPosition());
-				VnameExpression vnameExpr = new VnameExpression(vname, node1.getPosition());
-				vnameExpr.type = StdEnvironment.booleanType;
-            
-				return vnameExpr;
-        }
-    }
-    
-	// any unhandled situation (i.e., not foldable) is ignored
-	return null;
-}
-}
+			} else if (foldedValue instanceof Boolean) {
+				/* currently not handled! */
+			}
+		}
+
+		// any unhandled situation (i.e., not foldable) is ignored
+		return null;
+	}
 	
+	public void displayCompilerStatistics() {
+		System.out.println("Compiler Statistics:");
+		System.out.println("  Integer Expressions: " + integerExpressionsCount);
+		System.out.println("  Character Expressions: " + characterExpressionsCount);
+	}
+
+	@Override
+	public AbstractSyntaxTree visitLoopCommand(LoopCommand ast, Void arg) {
+		ast.C1.visit(this); 
+	    AbstractSyntaxTree replacement = ast.E.visit(this);
+	    if (replacement != null) {
+	        ast.E = (Expression) replacement;
+	    }
+	    ast.C2.visit(this); 
+	    return null;
+	}
+
+}
+
+
 

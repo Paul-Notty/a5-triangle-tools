@@ -42,6 +42,7 @@ import triangle.abstractSyntaxTrees.commands.CallCommand;
 import triangle.abstractSyntaxTrees.commands.EmptyCommand;
 import triangle.abstractSyntaxTrees.commands.IfCommand;
 import triangle.abstractSyntaxTrees.commands.LetCommand;
+import triangle.abstractSyntaxTrees.commands.LoopCommand;
 import triangle.abstractSyntaxTrees.commands.SequentialCommand;
 import triangle.abstractSyntaxTrees.commands.WhileCommand;
 import triangle.abstractSyntaxTrees.declarations.BinaryOperatorDeclaration;
@@ -184,6 +185,8 @@ public final class Encoder implements ActualParameterVisitor<Frame, Integer>,
 		emitter.emit(OpCode.JUMPIF, Machine.trueRep, Register.CB, loopAddr);
 		return null;
 	}
+	
+	
 
 	// Expressions
 	@Override
@@ -802,5 +805,17 @@ public final class Encoder implements ActualParameterVisitor<Frame, Integer>,
 
 		var baseObject = (AddressableEntity) V.visit(this, frame);
 		baseObject.encodeFetchAddress(emitter, frame, V);
+	}
+
+	@Override
+	public Void visitLoopCommand(LoopCommand ast, Frame frame) {
+	    var loopAddr = emitter.getNextInstrAddr();
+	    ast.C1.visit(this, frame);              // Always run C1 first
+	    ast.E.visit(this, frame);               // Test E
+	    var jumpifAddr = emitter.emit(OpCode.JUMPIF, Machine.falseRep, Register.CB, 0);
+	    ast.C2.visit(this, frame);              // Run C2 if E is true
+	    emitter.emit(OpCode.JUMP, 0, Register.CB, loopAddr); // Loop back
+	    emitter.patch(jumpifAddr);              // Patch the exit jump
+	    return null;
 	}
 }

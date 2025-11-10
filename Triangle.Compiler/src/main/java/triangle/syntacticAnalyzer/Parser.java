@@ -41,6 +41,7 @@ import triangle.abstractSyntaxTrees.commands.Command;
 import triangle.abstractSyntaxTrees.commands.EmptyCommand;
 import triangle.abstractSyntaxTrees.commands.IfCommand;
 import triangle.abstractSyntaxTrees.commands.LetCommand;
+import triangle.abstractSyntaxTrees.commands.LoopCommand;
 import triangle.abstractSyntaxTrees.commands.SequentialCommand;
 import triangle.abstractSyntaxTrees.commands.WhileCommand;
 import triangle.abstractSyntaxTrees.declarations.ConstDeclaration;
@@ -85,6 +86,7 @@ import triangle.abstractSyntaxTrees.vnames.DotVname;
 import triangle.abstractSyntaxTrees.vnames.SimpleVname;
 import triangle.abstractSyntaxTrees.vnames.SubscriptVname;
 import triangle.abstractSyntaxTrees.vnames.Vname;
+import triangle.syntacticAnalyzer.Token.Kind;
 
 public class Parser {
 
@@ -288,8 +290,26 @@ public class Parser {
 				finish(commandPos);
 				commandAST = new CallCommand(iAST, apsAST, commandPos);
 
+			} else if(currentToken.kind == Token.Kind.OPERATOR && currentToken.spelling.equals("**")){
+				Vname vAST = parseRestOfVname(iAST);
+				acceptIt();
+				
+				SourcePosition assignPos = new SourcePosition();
+				start(assignPos);
+		
+		        VnameExpression leftExpr = new VnameExpression(vAST, vAST.getPosition());
+		        IntegerLiteral twoLiteral = new IntegerLiteral("2", currentToken.position);
+		        IntegerExpression twoExpr = new IntegerExpression(twoLiteral, currentToken.position);
+		       
+		        Operator multiplyOp = new Operator("*", currentToken.position);
+		        BinaryExpression rightExpr = new BinaryExpression(leftExpr, multiplyOp, twoExpr, assignPos);
+		        
+		        finish(assignPos);
+		        commandAST = new AssignCommand(vAST, rightExpr, assignPos);
+		        finish(commandPos);
+				
+				
 			} else {
-
 				Vname vAST = parseRestOfVname(iAST);
 				accept(Token.Kind.BECOMES);
 				Expression eAST = parseExpression();
@@ -304,7 +324,13 @@ public class Parser {
 			commandAST = parseCommand();
 			accept(Token.Kind.END);
 			break;
-
+			
+		case LCURLY:
+			acceptIt();
+			commandAST = parseCommand();
+			accept(Token.Kind.RCURLY);
+			break;
+		
 		case LET: {
 			acceptIt();
 			Declaration dAST = parseDeclaration();
@@ -336,9 +362,22 @@ public class Parser {
 			commandAST = new WhileCommand(eAST, cAST, commandPos);
 		}
 			break;
+			
+		case LOOP:{
+			acceptIt();
+		    Command c1AST = parseSingleCommand();  
+		    accept(Token.Kind.WHILE);
+		    Expression eAST = parseExpression();    
+		    accept(Token.Kind.DO);
+		    Command c2AST = parseSingleCommand();  
+		    finish(commandPos);
+		    commandAST = new LoopCommand(c1AST, eAST, c2AST, commandPos);
+		}
+		break;
 
 		case SEMICOLON:
 		case END:
+		case RCURLY:
 		case ELSE:
 		case IN:
 		case EOT:

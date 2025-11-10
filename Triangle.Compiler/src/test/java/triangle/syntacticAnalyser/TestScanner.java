@@ -77,8 +77,19 @@ public class TestScanner {
 	public void testRepeatUntil() {
 		compileExpectFailure("/repeatuntil.tri");
 	}
-	
-	
+	@Test
+	public void testDouble() {
+		compileExpectSuccess("/double.tri");
+	}
+	@Test
+	public void testLoopWhile() {
+		compileExpectSuccess("/loopwhile.tri");
+	}
+	@Test
+	public void testWhileCurly() {
+		compileExpectSuccess("/while-curly.tri");
+	}
+
 	
 	private void compileExpectSuccess(String filename) {
 		// build.gradle has a line sourceSets.test.resources.srcDir file("$rootDir/programs")
